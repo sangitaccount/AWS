@@ -132,6 +132,18 @@
 		 }
 	}
 	
+	},
+	
+	"Outputs" : {
+	"InstanceId" : {
+	"Value" : {"Ref" : "OpenVPNInstance" },
+	"Description" : "OpenVPN Instance ID"
+	},
+	"SecurityGroupId" : {
+	"Value" : {"Ref" : "OpenVPNSG"},
+	"Description" : "OpenVPN Security Group"
+	}
+	
 	}
 
 }

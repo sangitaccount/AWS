@@ -1,12 +1,12 @@
 { "AWSTemplateFormatVersion" : "2010-09-09",
-  "Description" : "VPC Create with 2 Public and 2 Private across multiple AZ",
+  "Description" : "VPC Create with 3 Public and 3 Private across multiple AZ",
   
   "Parameters" : {
   
   "VPCBlock" : {
   "Description" : "Mention the VPC CIDR Block",
   "Type" : "String",
-  "Default" : "10.0.0.0/16",
+  "Default" : "10.0.0.0/24",
   "AllowedPattern" : "(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})/(\\d{1,2})"
   
   },
@@ -14,31 +14,44 @@
   "PublicSubnet1" : {
   "Description" : "Public Subnet in AZ1",
   "Type" : "String",
-  "Default" : "10.0.0.0/24",
+  "Default" : "10.0.0.0/27",
   "AllowedPattern" : "(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})/(\\d{1,2})"
   },
   
   "PrivateSubnet1" : {
   "Description" : "Private Subnet in AZ1",
   "Type" : "String",
-  "Default" : "10.0.1.0/24",
+  "Default" : "10.0.0.128/27",
   "AllowedPattern" : "(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})/(\\d{1,2})"
   },
   
   "PublicSubnet2" : {
   "Description" : "Public Subnet in AZ2",
   "Type" : "String",
-  "Default" : "10.0.2.0/24",
+  "Default" : "10.0.0.32/27",
   "AllowedPattern" : "(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})/(\\d{1,2})"
   },
   
   "PrivateSubnet2" : {
   "Description" : "Private Subnet in AZ2",
   "Type" : "String",
-  "Default" : "10.0.3.0/24",
+  "Default" : "10.0.0.160/27",
+  "AllowedPattern" : "(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})/(\\d{1,2})"
+  },
+  
+  "PublicSubnet3" : {
+  "Description" : "Public Subnet in AZ3",
+  "Type" : "String",
+  "Default" : "10.0.0.64/27",
+  "AllowedPattern" : "(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})/(\\d{1,2})"
+  },
+  
+  "PrivateSubnet3" : {
+  "Description" : "Public Subnet in AZ3",
+  "Type" : "String",
+  "Default" : "10.0.0.192/27",
   "AllowedPattern" : "(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})/(\\d{1,2})"
   }
-  
   
   },
   
@@ -64,7 +77,7 @@
   "AvailabilityZone" : { "Fn::Select" : [ "0", { "Fn::GetAZs" : "" } ] }
   } },
   
-    "PrivateSubnetOne" : {
+  "PrivateSubnetOne" : {
   "Type" : "AWS::EC2::Subnet",
   "Properties" : {
   "VpcId" : {"Ref" : "VPC"},
@@ -72,7 +85,7 @@
   "AvailabilityZone" : { "Fn::Select" : [ "0", { "Fn::GetAZs" : "" } ] }
   } },
   
-    "PublicSubnetTwo" : {
+  "PublicSubnetTwo" : {
   "Type" : "AWS::EC2::Subnet",
   "Properties" : {
   "VpcId" : {"Ref" : "VPC"},
@@ -80,12 +93,29 @@
   "AvailabilityZone" : { "Fn::Select" : [ "1", { "Fn::GetAZs" : "" } ] }
   }},
   
-    "PrivateSubnetTwo" : {
+  "PrivateSubnetTwo" : {
   "Type" : "AWS::EC2::Subnet",
   "Properties" : {
   "VpcId" : {"Ref" : "VPC"},
   "CidrBlock" : {"Ref" : "PrivateSubnet2"},
   "AvailabilityZone" : { "Fn::Select" : [ "1", { "Fn::GetAZs" : "" } ] }
+  }
+  },
+  
+  "PublicSubnetThree" : {
+  "Type" : "AWS::EC2::Subnet",
+  "Properties" : {
+  "VpcId" : {"Ref" : "VPC"},
+  "CidrBlock" : {"Ref" : "PublicSubnet3"},
+  "AvailabilityZone" : { "Fn::Select" : [ "2", { "Fn::GetAZs" : "" } ] }
+  }},
+  
+  "PrivateSubnetThree" : {
+  "Type" : "AWS::EC2::Subnet",
+  "Properties" : {
+  "VpcId" : {"Ref" : "VPC"},
+  "CidrBlock" : {"Ref" : "PrivateSubnet3"},
+  "AvailabilityZone" : { "Fn::Select" : [ "2", { "Fn::GetAZs" : "" } ] }
   }
   },
   
@@ -180,7 +210,15 @@
         "RouteTableId" : { "Ref" : "PublicRouteTable" }
       }
     },
-    
+	
+    "PublicSubnetRouteTableAssociation3" : {
+      "Type" : "AWS::EC2::SubnetRouteTableAssociation",
+      "Properties" : {
+        "SubnetId" : { "Ref" : "PublicSubnetThree" },
+        "RouteTableId" : { "Ref" : "PublicRouteTable" }
+      }
+    },
+	
     "PrivateSubnetRouteTableAssociation1" : {
       "Type" : "AWS::EC2::SubnetRouteTableAssociation",
       "Properties" : {
@@ -192,6 +230,13 @@
       "Type" : "AWS::EC2::SubnetRouteTableAssociation",
       "Properties" : {
         "SubnetId" : { "Ref" : "PrivateSubnetTwo" },
+        "RouteTableId" : { "Ref" : "PrivateRouteTable" }
+      }
+    },
+	"PrivateSubnetRouteTableAssociation3" : {
+      "Type" : "AWS::EC2::SubnetRouteTableAssociation",
+      "Properties" : {
+        "SubnetId" : { "Ref" : "PrivateSubnetThree" },
         "RouteTableId" : { "Ref" : "PrivateRouteTable" }
       }
     }
@@ -210,7 +255,8 @@
       "Description" : "Public Subnets",
       "Value" : { "Fn::Join":["", [
 			{"Ref" : "PublicSubnetOne" }, ", ",
-			{"Ref" : "PublicSubnetTwo" }
+			{"Ref" : "PublicSubnetTwo" }, ", ",
+			{"Ref" : "PublicSubnetThree" }, ", ",
         ]]}
     },
 
@@ -218,7 +264,8 @@
       "Description" : "Private Subnets",
       "Value" : { "Fn::Join":["", [
 			{"Ref" : "PrivateSubnetOne" }, ", ",
-			{"Ref" : "PrivateSubnetTwo" }
+			{"Ref" : "PrivateSubnetTwo" }, ", ",
+			{"Ref" : "PrivateSubnetThree" }, ", ",
         ]]}
     }
 

@@ -6,7 +6,7 @@
 	Before using the template you may need to update the respective region that you are trying to deploy in along with AMI images ID's.
 
 - VPC_Formation.txt
-	1) CF Template creates VPC with 2 subnets ( public + private ) in AZ1 and 2 more subnets ( public + private ) subnets in AZ2.
+	1) CF Template creates VPC with 3 subnets ( public + private ) so total in 6 in each AZ.
 	2) Creates NAT Gateway in public subnet of AZ1.
 	3) Creates Route tables public and private.
 	4) Create Internet Gateway and attach to VPC.

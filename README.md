@@ -14,3 +14,6 @@
 	6) Update private route table with the route to NAT Gateway.
 	7) Creates public and private ACL tables.
 	
+- AWS_EC2_Instance
+	Simple template to provision EC2 Instance in the selected subnet
+	

@@ -1,0 +1,235 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "To Create EC2 Instance in AZ3",
+  "Parameters": {
+    "EC2InstanceType": {
+      "Description": "EC2 instance Type",
+      "Type": "String",
+      "Default": "t2.micro",
+      "AllowedValues": [
+        "t2.micro",
+        "m1.small"
+      ]
+    },
+    "Network": {
+      "Description": "VPC",
+      "Type": "AWS::EC2::VPC::Id",
+      "ConstraintDescription": "must be one of the existing VPCs"
+    },
+    "Subnet": {
+      "Description": "Subnet to create EC2",
+      "Type": "AWS::EC2::Subnet::Id",
+      "ConstraintDescription": "must be one of the existing subnets"
+    },
+    "SecurityKey": {
+      "Description": "SSH Key Pair",
+      "Type": "AWS::EC2::KeyPair::KeyName",
+      "ConstraintDescription": "must be the name of an existing EC2 KeyPair."
+    },
+    "SSHLocation": {
+      "Description": "IP range to allow SSH access",
+      "Type": "String",
+      "ConstraintDescription": "Must be in the form of CIDR",
+      "Default": "0.0.0.0/0",
+      "AllowedPattern": "(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})/(\\d{1,2})"
+    },
+    "AMIId": {
+      "Description": "Provide AMI Id of the image",
+      "Type": "String",
+      "Default": "ami-162c2575"
+    }
+  },
+  "Resources": {
+    "EC2SG": {
+      "Type": "AWS::EC2::SecurityGroup",
+      "Properties": {
+        "GroupDescription": "EC2 Security Group",
+        "VpcId": {
+          "Ref": "Network"
+        },
+        "SecurityGroupIngress": [
+          {
+            "IpProtocol": "tcp",
+            "FromPort": "22",
+            "ToPort": "22",
+            "CidrIp": {
+              "Ref": "SSHLocation"
+            }
+          },
+          {
+            "IpProtocol": "tcp",
+            "FromPort": "80",
+            "ToPort": "80",
+            "CidrIp": "0.0.0.0/0"
+          }
+        ]
+      }
+    },
+    "EC2Instance": {
+      "Type": "AWS::EC2::Instance",
+      "Metadata": {
+        "Comment1": "Configure the bootstrap helpers to install the Apache Web Server",
+        "Comment2": "Save website content to /var/www/html/test.html",
+        "AWS::CloudFormation::Init": {
+          "configSets": {
+            "Install": [
+              "Install"
+            ]
+          },
+          "Install": {
+            "packages": {
+              "yum": {
+                "httpd": []
+              }
+            },
+            "files": {
+              "/var/www/html/test.html": {
+                "source": "https://s3-ap-southeast-2.amazonaws.com/sanawstest/test3.html",
+                "mode": "0600",
+                "owner": "apache",
+                "group": "apache"
+              },
+              "/etc/cfn/cfn-hup.conf": {
+                "content": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "[main]\n",
+                      "stack=",
+                      {
+                        "Ref": "AWS::StackId"
+                      },
+                      "\n",
+                      "region=",
+                      {
+                        "Ref": "AWS::Region"
+                      },
+                      "\n"
+                    ]
+                  ]
+                },
+                "mode": "000400",
+                "owner": "root",
+                "group": "root"
+              },
+              "/etc/cfn/hooks.d/cfn-auto-reloader.conf": {
+                "content": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "[cfn-auto-reloader-hook]\n",
+                      "triggers=post.update\n",
+                      "path=Resources.EC2Instance.Metadata.AWS::CloudFormation::Init\n",
+                      "action=/opt/aws/bin/cfn-init -v ",
+                      "         --stack ",
+                      {
+                        "Ref": "AWS::StackName"
+                      },
+                      "         --resource EC2Instance ",
+                      "         --configsets Install ",
+                      "         --region ",
+                      {
+                        "Ref": "AWS::Region"
+                      },
+                      "\n",
+                      "runas=root\n"
+                    ]
+                  ]
+                }
+              }
+            },
+            "services": {
+              "sysvinit": {
+                "httpd": {
+                  "enabled": "true",
+                  "ensureRunning": "true"
+                },
+                "cfn-hup": {
+                  "enabled": "true",
+                  "ensureRunning": "true",
+                  "files": [
+                    "/etc/cfn/cfn-hup.conf",
+                    "/etc/cfn/hooks.d/cfn-auto-reloader.conf"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+      "Properties": {
+        "InstanceType": {
+          "Ref": "EC2InstanceType"
+        },
+        "ImageId": {"Ref" : "AMIId"},
+        "KeyName": {
+          "Ref": "SecurityKey"
+        },
+        "UserData": {
+          "Fn::Base64": {
+            "Fn::Join": [
+              "",
+              [
+                "#!/bin/bash \n",
+                "yum install -y aws-cfn-bootstrap\n",
+                "# Install the files and packages from the metadata\n",
+                "/opt/aws/bin/cfn-init -v ",
+                "         --stack ",
+                {
+                  "Ref": "AWS::StackName"
+                },
+                "         --resource EC2Instance ",
+                "         --configsets Install ",
+                "         --region ",
+                {
+                  "Ref": "AWS::Region"
+                },
+                "\n",
+                "# Signal the status from cfn-init\n",
+                "/opt/aws/bin/cfn-signal -e $? ",
+                "         --stack ",
+                {
+                  "Ref": "AWS::StackName"
+                },
+                "         --resource EC2Instance ",
+                "         --region ",
+                {
+                  "Ref": "AWS::Region"
+                }
+              ]
+            ]
+          }
+        },
+        "NetworkInterfaces": [
+          {
+            "AssociatePublicIpAddress": "True",
+            "DeleteOnTermination": "True",
+            "SubnetId": {
+              "Ref": "Subnet"
+            },
+            "DeviceIndex": "0",
+            "GroupSet": [
+              {
+                "Ref": "EC2SG"
+              }
+            ]
+          }
+        ]
+      }
+    }
+    },
+    "Outputs": {
+      "InstanceId": {
+        "Value": {
+          "Ref": "EC2Instance"
+        },
+        "Description": "EC2 Instance ID"
+      },
+      "SecurityGroupId": {
+        "Value": {
+          "Ref": "EC2SG"
+        },
+        "Description": "EC2 Security Group"
+      }
+    }
+}

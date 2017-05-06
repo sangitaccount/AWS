@@ -17,3 +17,5 @@
 - AWS_EC2_Instance
 	1) Simple template to provision EC2 Instance in the selected subnet
 	
+- AWS_EC2_Apache
+        1) Simple template to provision EC2 Instance with Apache running

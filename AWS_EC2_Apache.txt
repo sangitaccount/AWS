@@ -37,6 +37,10 @@
       "Description": "Provide AMI Id of the image",
       "Type": "String",
       "Default": "ami-162c2575"
+    },
+    "HTMLFile": {
+      "Description": "Provide HTML Name",
+      "Type": "String"
     }
   },
   "Resources": {
@@ -84,7 +88,7 @@
             },
             "files": {
               "/var/www/html/test.html": {
-                "source": "https://s3-ap-southeast-2.amazonaws.com/sanawstest/test3.html",
+                "source": {"Fn::Join": [ "",["https://s3-ap-southeast-2.amazonaws.com/sanawstest/",{"Ref": "HTMLFile"}]]},
                 "mode": "0600",
                 "owner": "apache",
                 "group": "apache"

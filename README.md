@@ -15,7 +15,10 @@
 	7) Creates public and private ACL tables.
 	
 - AWS_EC2_Instance
-	1) Simple template to provision EC2 Instance in the selected subnet
+	1) Simple template to provision EC2 Instance in the selected subnet.
 	
 - AWS_EC2_Apache
-	1) Simple template to provision EC2 Instance with Apache running
+	1) Simple template to provision EC2 Instance with Apache running.
+	
+- AWS_ELB_Apache
+	1) Classic Load Balancer across three AZ's with instances running Apache on port 80.

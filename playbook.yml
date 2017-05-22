@@ -5,4 +5,4 @@
 
   tasks:
   - name: "Update Product"
-    command: "chmod 755 update_product.sh && /bin/bash update_product.sh"
+    command: update_product.sh

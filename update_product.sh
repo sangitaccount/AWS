@@ -1,6 +1,6 @@
 #!/bin/bash
 
-aws s3 cp /root/AWS/cfn-templates/AWS_EC2_Instance2.txt s3://san-cfn-templates/AWS_EC2_Instance2.txt
+aws s3 cp ./cfn-templates/AWS_EC2_Instance2.txt s3://san-cfn-templates/AWS_EC2_Instance2.txt
 
 aws servicecatalog create-provisioning-artifact --product-id prod-lgdk3omhh2qgq --parameters Name=version2,Info={'LoadTemplateFromURL'='https://s3-ap-southeast-2.amazonaws.com/san-cfn-templates/AWS_EC2_Instance2.txt'},Type=CLOUD_FORMATION_TEMPLATE --idempotency-token string
 

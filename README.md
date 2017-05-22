@@ -1,4 +1,4 @@
-# AWS
+# AWS - CFN Templates
 
 - OpenVPN.txt
 

@@ -5,4 +5,4 @@
 
   tasks:
   - name: "Update Product"
-    command: update_product.sh
+    command: ./update_product.sh

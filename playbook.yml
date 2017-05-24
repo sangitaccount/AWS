@@ -1,8 +1,8 @@
 ---
-- hosts: 127.0.0.1
+- hosts: product 
   connection: local
   become: True
 
   tasks:
   - name: "Update Product"
-    command: ./update_product.sh
+    command: ./update_product.py -p {{ productname }} -t {{ cfn_template }} -b {{ s3bucket }} -v {{ version }}

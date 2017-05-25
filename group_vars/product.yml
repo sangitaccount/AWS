@@ -1,7 +1,7 @@
 ---
 
 productname: EC2Instance
-cfn_template: AWS_EC2_Instance.txt
+cfn_template: AWS_EC2_Instance.json
 s3bucket: san-cfn-templates
 version: Version2
 

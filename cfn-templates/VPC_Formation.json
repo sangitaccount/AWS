@@ -55,14 +55,9 @@
   
   },
   
-  "Mappings" : {
-  
-  },
-  
   "Resources" : {
   
   "VPC" : {
-		"Description" : "VPC Creation",
 		"Type" : "AWS::EC2::VPC",
 		"Properties" : {
 		"CidrBlock" : {"Ref" : "VPCBlock"}
@@ -256,7 +251,7 @@
       "Value" : { "Fn::Join":["", [
 			{"Ref" : "PublicSubnetOne" }, ", ",
 			{"Ref" : "PublicSubnetTwo" }, ", ",
-			{"Ref" : "PublicSubnetThree" }, ", ",
+			{"Ref" : "PublicSubnetThree" }, ", "
         ]]}
     },
 
@@ -265,7 +260,7 @@
       "Value" : { "Fn::Join":["", [
 			{"Ref" : "PrivateSubnetOne" }, ", ",
 			{"Ref" : "PrivateSubnetTwo" }, ", ",
-			{"Ref" : "PrivateSubnetThree" }, ", ",
+			{"Ref" : "PrivateSubnetThree" }, ", "
         ]]}
     }
 

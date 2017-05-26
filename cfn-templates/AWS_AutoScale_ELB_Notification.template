@@ -23,10 +23,6 @@
       "Type": "String",
       "Default": "ami-162c2575"
     },
-    "SecurityGroups": {
-      "Description": "Security Groups to be assigned to EC2 Instances",
-      "Type": "List<AWS::EC2::SecurityGroup::GroupName>"
-    },
     "PublicORPrivate": {
       "Description": "Should we assign Public IPs to Instances",
       "Type": "String",

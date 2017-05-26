@@ -19,6 +19,9 @@
     },
     "SecurityGroups": {
       "Type": "List<AWS::EC2::SecurityGroup::GroupName>"
+    },
+    "SubnetsforAutoScaling": {
+      "Type": "List<AWS::EC2::Subnet::Id>"
     }
   },
   "Resources" : {
@@ -35,7 +38,9 @@
       "Properties": {
         "AvailabilityZones" : { "Fn::GetAZs" : ""},
         "LaunchConfigurationName" : { "Ref" : "LaunchConfiguration" },
+        "VPCZoneIdentifier": {"Ref": "SubnetsforAutoScaling"},
         "MinSize": 1,
+        "DesiredCapacity": 1,
         "MaxSize": 3,
         "TerminationPolicies": ["OldestInstance","OldestLaunchConfiguration"]
       }

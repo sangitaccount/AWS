@@ -84,6 +84,7 @@
       "Properties": {
         "ImageId": {"Ref": "AMIId"},
         "InstanceType": {"Ref": "EC2InstanceType"},
+        "AssociatePublicIpAddress": {"Ref": "PublicORPrivate"},
         "SecurityGroups": [{"Ref": "SecurityGroups"},
           {
             "IpProtocol" : "tcp",
@@ -92,18 +93,24 @@
             "SourceSecurityGroupOwnerId" : {"Fn::GetAtt" : ["ElasticLoadBalancer", "SourceSecurityGroup.OwnerAlias"]},
             "SourceSecurityGroupName" : {"Fn::GetAtt" : ["ElasticLoadBalancer", "SourceSecurityGroup.GroupName"]}
           }
-        ],
-        "AssociatePublicIpAddress": {"Ref": "PublicORPrivate"},
-        "LoadBalancerNames" : [ { "Ref" : "ElasticLoadBalancer" } ],
-        "NotificationConfiguration" : {
-          "TopicARN" : { "Ref" : "NotificationTopic" },
-          "NotificationTypes" : [ "autoscaling:EC2_INSTANCE_LAUNCH",
-            "autoscaling:EC2_INSTANCE_LAUNCH_ERROR",
-            "autoscaling:EC2_INSTANCE_TERMINATE",
-            "autoscaling:EC2_INSTANCE_TERMINATE_ERROR"]
+        ]
+      },
+      "CreationPolicy" : {
+        "ResourceSignal" : {
+          "Timeout" : "PT15M",
+          "Count"   : "1"
+        }
+      },
+      "UpdatePolicy": {
+        "AutoScalingRollingUpdate": {
+          "MinInstancesInService": "1",
+          "MaxBatchSize": "1",
+          "PauseTime" : "PT15M",
+          "WaitOnResourceSignals": "true"
         }
       }
     },
+
     "AutoScalingConfiguration": {
       "Type": "AWS::AutoScaling::AutoScalingGroup",
       "Properties": {
@@ -114,7 +121,15 @@
         "DesiredCapacity": 1,
         "MaxSize": 3,
         "HealthCheckGracePeriod": {"Ref": "InstanceHealthCheckWaitTime"},
-        "TerminationPolicies": ["OldestInstance","OldestLaunchConfiguration"]
+        "TerminationPolicies": ["OldestInstance","OldestLaunchConfiguration"],
+        "LoadBalancerNames" : [ { "Ref" : "ElasticLoadBalancer" } ],
+        "NotificationConfigurations" : {
+          "TopicARN" : { "Ref" : "NotificationTopic" },
+          "NotificationTypes" : [ "autoscaling:EC2_INSTANCE_LAUNCH",
+            "autoscaling:EC2_INSTANCE_LAUNCH_ERROR",
+            "autoscaling:EC2_INSTANCE_TERMINATE",
+            "autoscaling:EC2_INSTANCE_TERMINATE_ERROR"]
+        }
       }
     },
     "ScaleUpPolicy" : {

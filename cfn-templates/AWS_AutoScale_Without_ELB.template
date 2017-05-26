@@ -18,9 +18,11 @@
       "Default": "ami-162c2575"
     },
     "SecurityGroups": {
+      "Description": "Security Groups to be assigned to EC2 Instances",
       "Type": "List<AWS::EC2::SecurityGroup::GroupName>"
     },
     "PublicORPrivate": {
+      "Description": "Should we assign Public IPs to Instances",
       "Type": "String",
       "Default": "False",
       "AllowedValues": [
@@ -29,7 +31,13 @@
       ]
     },
     "SubnetsforAutoScaling": {
+      "Description": "Select the subnets where EC2 Instances to be launched",
       "Type": "List<AWS::EC2::Subnet::Id>"
+    },
+    "InstanceWaitTime": {
+      "Description": "Time to wait before considering EC2 Instance is healthy",
+      "Type": "Number",
+      "Default": 0
     }
   },
   "Resources" : {
@@ -51,6 +59,7 @@
         "MinSize": 1,
         "DesiredCapacity": 1,
         "MaxSize": 3,
+        "HealthCheckGracePeriod": {"Ref": "InstanceWaitTime"},
         "TerminationPolicies": ["OldestInstance","OldestLaunchConfiguration"]
       }
     },

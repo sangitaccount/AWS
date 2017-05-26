@@ -1,0 +1,34 @@
+{
+  "AWSTemplateFormatVersion" : "2010-09-09",
+  "Description" : "Template to Create AutoScaling group without load balancer",
+
+  "Parameters": {
+    "EC2InstanceType": {
+      "Description": "EC2 instance Type",
+      "Type": "String",
+      "Default": "t2.micro",
+      "AllowedValues": [
+        "t2.micro",
+        "m1.small"
+      ]
+    },
+    "AMIId": {
+      "Description": "Provide AMI Id of the image",
+      "Type": "String",
+      "Default": "ami-162c2575"
+    },
+    "SecurityGroups": {
+      "Type": "List<AWS::EC2::SecurityGroup::GroupName>"
+    }
+  },
+  "Resources" : {
+    "LaunchConfiguration": {
+      "Type": "AWS::AutoScaling::LaunchConfiguration",
+      "Properties": {
+        "ImageId": {"Ref": "AMIId"},
+        "InstanceType": {"Ref": "EC2InstanceType"},
+        "SecurityGroups": {"Ref": "SecurityGroups"}
+      }
+    }
+  }
+}

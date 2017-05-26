@@ -34,7 +34,7 @@
       "Description": "Select the subnets where EC2 Instances to be launched",
       "Type": "List<AWS::EC2::Subnet::Id>"
     },
-    "InstanceWaitTime": {
+    "InstanceHealthCheckWaitTime": {
       "Description": "Time to wait before start checking EC2 health",
       "Type": "Number",
       "Default": 0
@@ -42,7 +42,7 @@
     "ScalingWaitTime": {
       "Description": "Amount of Time to wait between trigger related scaling activities",
       "Type": "Number",
-      "Default": 60
+      "Default": 180
     }
   },
   "Resources" : {
@@ -64,7 +64,7 @@
         "MinSize": 1,
         "DesiredCapacity": 1,
         "MaxSize": 3,
-        "HealthCheckGracePeriod": {"Ref": "InstanceWaitTime"},
+        "HealthCheckGracePeriod": {"Ref": "InstanceHealthCheckWaitTime"},
         "TerminationPolicies": ["OldestInstance","OldestLaunchConfiguration"]
       }
     },

@@ -29,6 +29,43 @@
         "InstanceType": {"Ref": "EC2InstanceType"},
         "SecurityGroups": {"Ref": "SecurityGroups"}
       }
+    },
+    "AutoScalingConfiguration": {
+      "Type": "AWS::AutoScaling::AutoScalingGroup",
+      "Properties": {
+        "AvailabilityZones" : { "Fn::GetAZs" : ""},
+        "LaunchConfigurationName" : { "Ref" : "LaunchConfiguration" },
+        "MinSize": 1,
+        "MaxSize": 3,
+        "TerminationPolicies": ["OldestInstance","OldestLaunchConfiguration"]
+      }
+    },
+    "ScaleUpPolicy" : {
+      "Type" : "AWS::AutoScaling::ScalingPolicy",
+      "Properties" : {
+        "AdjustmentType" : "CapacityIncrease",
+        "AutoScalingGroupName" : { "Ref" : "AutoScalingConfiguration" },
+        "Cooldown" : "1",
+        "ScalingAdjustment" : "1"
+      }
+    },
+    "CPUAlarmHigh": {
+      "Type": "AWS::CloudWatch::Alarm",
+      "Properties": {
+        "EvaluationPeriods": "1",
+        "Statistic": "Average",
+        "Threshold": "10",
+        "AlarmDescription": "Alarm if CPU too high or metric disappears indicating instance is down",
+        "Period": "60",
+        "AlarmActions": [ { "Ref": "ScaleUpPolicy" } ],
+        "Namespace": "AWS/EC2",
+        "Dimensions": [ {
+          "Name": "AutoScalingGroupName",
+          "Value": { "Ref": "AutoScalingConfiguration" }
+        } ],
+        "ComparisonOperator": "GreaterThanThreshold",
+        "MetricName": "CPUUtilization"
+      }
     }
   }
 }

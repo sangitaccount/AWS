@@ -35,9 +35,14 @@
       "Type": "List<AWS::EC2::Subnet::Id>"
     },
     "InstanceWaitTime": {
-      "Description": "Time to wait before considering EC2 Instance is healthy",
+      "Description": "Time to wait before start checking EC2 health",
       "Type": "Number",
       "Default": 0
+    },
+    "ScalingWaitTime": {
+      "Description": "Amount of Time to wait between trigger related scaling activities",
+      "Type": "Number",
+      "Default": 60
     }
   },
   "Resources" : {
@@ -68,7 +73,7 @@
       "Properties" : {
         "AdjustmentType" : "ChangeInCapacity",
         "AutoScalingGroupName" : { "Ref" : "AutoScalingConfiguration" },
-        "Cooldown" : "1",
+        "Cooldown" : {"Ref": "ScalingWaitTime"},
         "ScalingAdjustment" : "1"
       }
     },
@@ -77,9 +82,9 @@
       "Properties": {
         "EvaluationPeriods": "1",
         "Statistic": "Average",
-        "Threshold": "10",
-        "AlarmDescription": "Alarm if CPU too high or metric disappears indicating instance is down",
-        "Period": "60",
+        "Threshold": "90",
+        "AlarmDescription": "Alarm if CPU is > 90% for 5 minutes",
+        "Period": "300",
         "AlarmActions": [ { "Ref": "ScaleUpPolicy" } ],
         "Namespace": "AWS/EC2",
         "Dimensions": [ {
@@ -87,6 +92,33 @@
           "Value": { "Ref": "AutoScalingConfiguration" }
         } ],
         "ComparisonOperator": "GreaterThanThreshold",
+        "MetricName": "CPUUtilization"
+      }
+    },
+    "ScaleDownPolicy" : {
+      "Type" : "AWS::AutoScaling::ScalingPolicy",
+      "Properties" : {
+        "AdjustmentType" : "ChangeInCapacity",
+        "AutoScalingGroupName" : { "Ref" : "AutoScalingConfiguration" },
+        "Cooldown" : {"Ref": "ScalingWaitTime"},
+        "ScalingAdjustment" : "-1"
+      }
+    },
+    "CPUAlarmLow": {
+      "Type": "AWS::CloudWatch::Alarm",
+      "Properties": {
+        "EvaluationPeriods": "1",
+        "Statistic": "Average",
+        "Threshold": "60",
+        "AlarmDescription": "Alarm if CPU is < 60% for 5 minutes",
+        "Period": "300",
+        "AlarmActions": [ { "Ref": "ScaleDownPolicy" } ],
+        "Namespace": "AWS/EC2",
+        "Dimensions": [ {
+          "Name": "AutoScalingGroupName",
+          "Value": { "Ref": "AutoScalingConfiguration" }
+        } ],
+        "ComparisonOperator": "LessThanThreshold",
         "MetricName": "CPUUtilization"
       }
     }

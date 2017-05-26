@@ -79,21 +79,26 @@
         }
       }
     },
+    "ELBSG": {
+      "Type" : "AWS::EC2::SecurityGroup",
+      "Properties" : {
+        "GroupDescription" : "Enable HTTP from the load balancer only",
+        "SecurityGroupIngress" : [ {
+        "IpProtocol" : "tcp",
+        "FromPort" : "80",
+        "ToPort" : "80",
+        "SourceSecurityGroupOwnerId" : {"Fn::GetAtt" : ["ElasticLoadBalancer", "SourceSecurityGroup.OwnerAlias"]},
+        "SourceSecurityGroupName" : {"Fn::GetAtt" : ["ElasticLoadBalancer", "SourceSecurityGroup.GroupName"]}
+         }]
+      }
+    },
     "LaunchConfiguration": {
       "Type": "AWS::AutoScaling::LaunchConfiguration",
       "Properties": {
         "ImageId": {"Ref": "AMIId"},
         "InstanceType": {"Ref": "EC2InstanceType"},
         "AssociatePublicIpAddress": {"Ref": "PublicORPrivate"},
-        "SecurityGroups": [{"Ref": "SecurityGroups"},
-          {
-            "IpProtocol" : "tcp",
-            "FromPort" : "80",
-            "ToPort" : "80",
-            "SourceSecurityGroupOwnerId" : {"Fn::GetAtt" : ["ElasticLoadBalancer", "SourceSecurityGroup.OwnerAlias"]},
-            "SourceSecurityGroupName" : {"Fn::GetAtt" : ["ElasticLoadBalancer", "SourceSecurityGroup.GroupName"]}
-          }
-        ]
+        "SecurityGroups": [{"Ref": "SecurityGroups"}, {"Ref": "ELBSG"}]
       },
       "CreationPolicy" : {
         "ResourceSignal" : {

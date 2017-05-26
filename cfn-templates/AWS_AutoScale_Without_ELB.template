@@ -43,7 +43,7 @@
     "ScaleUpPolicy" : {
       "Type" : "AWS::AutoScaling::ScalingPolicy",
       "Properties" : {
-        "AdjustmentType" : "CapacityIncrease",
+        "AdjustmentType" : "ChangeInCapacity",
         "AutoScalingGroupName" : { "Ref" : "AutoScalingConfiguration" },
         "Cooldown" : "1",
         "ScalingAdjustment" : "1"

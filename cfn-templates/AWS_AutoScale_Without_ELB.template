@@ -20,6 +20,14 @@
     "SecurityGroups": {
       "Type": "List<AWS::EC2::SecurityGroup::GroupName>"
     },
+    "PublicORPrivate": {
+      "Type": "String",
+      "Default": "False",
+      "AllowedValues": [
+        "True",
+        "False"
+      ]
+    },
     "SubnetsforAutoScaling": {
       "Type": "List<AWS::EC2::Subnet::Id>"
     }
@@ -30,7 +38,8 @@
       "Properties": {
         "ImageId": {"Ref": "AMIId"},
         "InstanceType": {"Ref": "EC2InstanceType"},
-        "SecurityGroups": {"Ref": "SecurityGroups"}
+        "SecurityGroups": {"Ref": "SecurityGroups"},
+        "AssociatePublicIpAddress": {"Ref": "PublicORPrivate"}
       }
     },
     "AutoScalingConfiguration": {

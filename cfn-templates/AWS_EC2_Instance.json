@@ -1,6 +1,6 @@
 {
   "AWSTemplateFormatVersion": "2010-09-09",
-  "Description": "To Create EC2 Instance in AZ3",
+  "Description": "To Create EC2 Instance in AZ",
   "Parameters": {
     "EC2InstanceType": {
       "Description": "EC2 instance Type",

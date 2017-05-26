@@ -1,0 +1,175 @@
+{
+  "AWSTemplateFormatVersion" : "2010-09-09",
+  "Description" : "Template to Create AutoScaling group with ELB and Notification",
+
+  "Parameters": {
+    "NotificationEMailId": {
+      "Description": "EMail address to notify if there are any scaling operations",
+      "Type": "String",
+      "AllowedPattern": "([a-zA-Z0-9_\\-\\.]+)@((\\[[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.)|(([a-zA-Z0-9\\-]+\\.)+))([a-zA-Z]{2,4}|[0-9]{1,3})(\\]?)",
+      "ConstraintDescription": "must be a valid email address."
+    },
+    "EC2InstanceType": {
+      "Description": "EC2 instance Type",
+      "Type": "String",
+      "Default": "t2.micro",
+      "AllowedValues": [
+        "t2.micro",
+        "m1.small"
+      ]
+    },
+    "AMIId": {
+      "Description": "Provide AMI Id of the image",
+      "Type": "String",
+      "Default": "ami-162c2575"
+    },
+    "SecurityGroups": {
+      "Description": "Security Groups to be assigned to EC2 Instances",
+      "Type": "List<AWS::EC2::SecurityGroup::GroupName>"
+    },
+    "PublicORPrivate": {
+      "Description": "Should we assign Public IPs to Instances",
+      "Type": "String",
+      "Default": "False",
+      "AllowedValues": [
+        "True",
+        "False"
+      ]
+    },
+    "SubnetsforAutoScaling": {
+      "Description": "Select the subnets where EC2 Instances to be launched",
+      "Type": "List<AWS::EC2::Subnet::Id>"
+    },
+    "InstanceHealthCheckWaitTime": {
+      "Description": "Time to wait before start checking EC2 health",
+      "Type": "Number",
+      "Default": 0
+    },
+    "ScalingWaitTime": {
+      "Description": "Amount of Time to wait between trigger related scaling activities",
+      "Type": "Number",
+      "Default": 180
+    }
+  },
+
+  "Resources" : {
+
+    "NotificationTopic": {
+      "Type": "AWS::SNS::Topic",
+      "Properties": {
+        "Subscription": [ { "Endpoint": { "Ref": "NotificationEMailId" }, "Protocol": "email" } ]
+      }
+    },
+    "ElasticLoadBalancer": {
+      "Type" : "AWS::ElasticLoadBalancing::LoadBalancer",
+      "Properties" : {
+        "AvailabilityZones" : { "Fn::GetAZs" : "" },
+        "CrossZone" : "true",
+        "Listeners" : [ {
+          "LoadBalancerPort" : "80",
+          "InstancePort" : "80",
+          "Protocol" : "HTTP"
+        } ],
+        "HealthCheck" : {
+          "Target" : "HTTP:80/",
+          "HealthyThreshold" : "3",
+          "UnhealthyThreshold" : "5",
+          "Interval" : "30",
+          "Timeout" : "5"
+        }
+      }
+    },
+    "LaunchConfiguration": {
+      "Type": "AWS::AutoScaling::LaunchConfiguration",
+      "Properties": {
+        "ImageId": {"Ref": "AMIId"},
+        "InstanceType": {"Ref": "EC2InstanceType"},
+        "SecurityGroups": [{"Ref": "SecurityGroups"},
+          {
+            "IpProtocol" : "tcp",
+            "FromPort" : "80",
+            "ToPort" : "80",
+            "SourceSecurityGroupOwnerId" : {"Fn::GetAtt" : ["ElasticLoadBalancer", "SourceSecurityGroup.OwnerAlias"]},
+            "SourceSecurityGroupName" : {"Fn::GetAtt" : ["ElasticLoadBalancer", "SourceSecurityGroup.GroupName"]}
+          }
+        ],
+        "AssociatePublicIpAddress": {"Ref": "PublicORPrivate"},
+        "LoadBalancerNames" : [ { "Ref" : "ElasticLoadBalancer" } ],
+        "NotificationConfiguration" : {
+          "TopicARN" : { "Ref" : "NotificationTopic" },
+          "NotificationTypes" : [ "autoscaling:EC2_INSTANCE_LAUNCH",
+            "autoscaling:EC2_INSTANCE_LAUNCH_ERROR",
+            "autoscaling:EC2_INSTANCE_TERMINATE",
+            "autoscaling:EC2_INSTANCE_TERMINATE_ERROR"]
+        }
+      }
+    },
+    "AutoScalingConfiguration": {
+      "Type": "AWS::AutoScaling::AutoScalingGroup",
+      "Properties": {
+        "AvailabilityZones" : { "Fn::GetAZs" : ""},
+        "LaunchConfigurationName" : { "Ref" : "LaunchConfiguration" },
+        "VPCZoneIdentifier": {"Ref": "SubnetsforAutoScaling"},
+        "MinSize": 1,
+        "DesiredCapacity": 1,
+        "MaxSize": 3,
+        "HealthCheckGracePeriod": {"Ref": "InstanceHealthCheckWaitTime"},
+        "TerminationPolicies": ["OldestInstance","OldestLaunchConfiguration"]
+      }
+    },
+    "ScaleUpPolicy" : {
+      "Type" : "AWS::AutoScaling::ScalingPolicy",
+      "Properties" : {
+        "AdjustmentType" : "ChangeInCapacity",
+        "AutoScalingGroupName" : { "Ref" : "AutoScalingConfiguration" },
+        "Cooldown" : {"Ref": "ScalingWaitTime"},
+        "ScalingAdjustment" : "1"
+      }
+    },
+    "CPUAlarmHigh": {
+      "Type": "AWS::CloudWatch::Alarm",
+      "Properties": {
+        "EvaluationPeriods": "1",
+        "Statistic": "Average",
+        "Threshold": "90",
+        "AlarmDescription": "Alarm if CPU is > 90% for 5 minutes",
+        "Period": "300",
+        "AlarmActions": [ { "Ref": "ScaleUpPolicy" } ],
+        "Namespace": "AWS/EC2",
+        "Dimensions": [ {
+          "Name": "AutoScalingGroupName",
+          "Value": { "Ref": "AutoScalingConfiguration" }
+        } ],
+        "ComparisonOperator": "GreaterThanThreshold",
+        "MetricName": "CPUUtilization"
+      }
+    },
+    "ScaleDownPolicy" : {
+      "Type" : "AWS::AutoScaling::ScalingPolicy",
+      "Properties" : {
+        "AdjustmentType" : "ChangeInCapacity",
+        "AutoScalingGroupName" : { "Ref" : "AutoScalingConfiguration" },
+        "Cooldown" : {"Ref": "ScalingWaitTime"},
+        "ScalingAdjustment" : "-1"
+      }
+    },
+    "CPUAlarmLow": {
+      "Type": "AWS::CloudWatch::Alarm",
+      "Properties": {
+        "EvaluationPeriods": "1",
+        "Statistic": "Average",
+        "Threshold": "60",
+        "AlarmDescription": "Alarm if CPU is < 60% for 5 minutes",
+        "Period": "300",
+        "AlarmActions": [ { "Ref": "ScaleDownPolicy" } ],
+        "Namespace": "AWS/EC2",
+        "Dimensions": [ {
+          "Name": "AutoScalingGroupName",
+          "Value": { "Ref": "AutoScalingConfiguration" }
+        } ],
+        "ComparisonOperator": "LessThanThreshold",
+        "MetricName": "CPUUtilization"
+      }
+    }
+  }
+}

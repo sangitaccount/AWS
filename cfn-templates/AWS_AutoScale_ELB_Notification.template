@@ -67,7 +67,7 @@
       "Type": "Number",
       "Default": 180
     }
-  },
+ },
 
   "Resources" : {
 
@@ -94,10 +94,26 @@
           "UnhealthyThreshold" : "5",
           "Interval" : "30",
           "Timeout" : "5"
-        }
+        },
+        "SecurityGroups": [{"Ref": "ELBSG"}]
+      }
+   },
+    "ELBSG": {
+      "Type": "AWS::EC2::SecurityGroup",
+      "Properties": {
+        "GroupDescription" : "Enable HTTP from Internet to ELB",
+        "VpcId" : {"Ref" : "Network"},
+        "SecurityGroupIngress" : [ {
+          "IpProtocol": "tcp",
+          "FromPort": "80",
+          "ToPort": "80",
+          "CidrIp": {
+            "Ref": "SSHLocation"
+          }
+        }]
       }
     },
-    "ELBSG": {
+    "InstanceSG": {
       "Type" : "AWS::EC2::SecurityGroup",
       "Properties" : {
         "GroupDescription" : "Enable HTTP from the load balancer only and SSH from the location selected",
@@ -111,8 +127,7 @@
         "IpProtocol" : "tcp",
         "FromPort" : "80",
         "ToPort" : "80",
-        "SourceSecurityGroupOwnerId" : {"Fn::GetAtt" : ["ElasticLoadBalancer", "SourceSecurityGroup.OwnerAlias"]},
-        "SourceSecurityGroupName" : {"Fn::GetAtt" : ["ElasticLoadBalancer", "SourceSecurityGroup.GroupName"]}
+          "SourceSecurityGroupId": {"Fn::GetAtt" : ["ELBSG", "GroupId"]}
          }]
       }
     },
@@ -122,7 +137,7 @@
         "ImageId": {"Ref": "AMIId"},
         "InstanceType": {"Ref": "EC2InstanceType"},
         "AssociatePublicIpAddress": {"Ref": "PublicORPrivate"},
-        "SecurityGroups": [{"Ref": "ELBSG"}]
+        "SecurityGroups": [{"Ref": "InstanceSG"}]
       }
     },
 

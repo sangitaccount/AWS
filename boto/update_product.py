@@ -40,9 +40,10 @@ def main(argv):
       elif opt in ("-v", "--version"):
          version = arg
 
-   update_s3_bucket(s3bucket,template)
    # Call function_product_id to find the Product Id of the Product Name passed
    productid = find_product_id(product,productid='')
+   check_product_version_exists(productid,version)
+   update_s3_bucket(s3bucket,template)
    update_product(s3bucket,template,productid,version)
 
 
@@ -54,6 +55,18 @@ def find_product_id(product,productid):
     if response['ProductViewSummaries'][i]['Name'] == product:
       productid = response['ProductViewSummaries'][i]['ProductId']
       return productid
+    else:
+      print "product not present in the catalog"
+      exit()
+
+def check_product_version_exists(productid,version):
+
+  client = boto3.client('servicecatalog')
+  response = client.list_provisioning_artifacts(ProductId=productid)
+  for i in range(len(response['ProvisioningArtifactDetails'])):
+    if response['ProvisioningArtifactDetails'][i]['Name'] == version:
+      print "productid with version already exists"
+      exit()
 
 def update_s3_bucket(s3bucket,template):
  

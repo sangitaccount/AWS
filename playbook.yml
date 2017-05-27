@@ -4,5 +4,5 @@
   become: True
 
   tasks:
-  - name: "Update Product"
-    command: ./update_product.py -p {{ productname }} -t {{ cfn_template }} -b {{ s3bucket }} -v {{ version }}
+  - name: "Update Service Catalog Product"
+    command: ./boto/update_product.py -p {{ productname }} -t {{ cfn_template }} -b {{ s3bucket }} -v {{ version }}

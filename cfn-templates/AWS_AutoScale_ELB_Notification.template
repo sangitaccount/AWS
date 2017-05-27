@@ -106,21 +106,7 @@
         "ImageId": {"Ref": "AMIId"},
         "InstanceType": {"Ref": "EC2InstanceType"},
         "AssociatePublicIpAddress": {"Ref": "PublicORPrivate"},
-        "SecurityGroups": [{"Ref": "ELBSG"}]
-      },
-      "CreationPolicy" : {
-        "ResourceSignal" : {
-          "Timeout" : "PT5M",
-          "Count"   : "1"
-        }
-      },
-      "UpdatePolicy": {
-        "AutoScalingRollingUpdate": {
-          "MinInstancesInService": "1",
-          "MaxBatchSize": "1",
-          "PauseTime" : "PT5M",
-          "WaitOnResourceSignals": "true"
-        }
+        "SecurityGroups": {"Ref": "ELBSG"}
       }
     },
 

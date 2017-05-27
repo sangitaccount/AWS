@@ -44,6 +44,15 @@
       "Type": "AWS::EC2::VPC::Id",
       "ConstraintDescription": "must be one of the existing VPCs"
     },
+    "ELBInternetFacing": {
+      "Description": "Do you want to make ELB Internet facing?",
+      "Type": "String",
+      "Default": "internal",
+      "AllowedValues": [
+        "internal",
+        "internet-facing"
+      ]
+    },
     "SubnetsforAutoScaling": {
       "Description": "Select the subnets where EC2 Instances to be launched",
       "Type": "List<AWS::EC2::Subnet::Id>"
@@ -71,8 +80,9 @@
     "ElasticLoadBalancer": {
       "Type" : "AWS::ElasticLoadBalancing::LoadBalancer",
       "Properties" : {
-        "AvailabilityZones" : { "Fn::GetAZs" : "" },
+        "Subnets" : {"Ref": "SubnetsforAutoScaling"},
         "CrossZone" : "true",
+        "Scheme": {"Ref": "ELBInternetFacing"},
         "Listeners" : [ {
           "LoadBalancerPort" : "80",
           "InstancePort" : "80",

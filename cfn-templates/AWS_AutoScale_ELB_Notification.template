@@ -39,6 +39,11 @@
       "Default": "0.0.0.0/0",
       "AllowedPattern": "(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})/(\\d{1,2})"
     },
+    "Network": {
+      "Description": "VPC",
+      "Type": "AWS::EC2::VPC::Id",
+      "ConstraintDescription": "must be one of the existing VPCs"
+    },
     "SubnetsforAutoScaling": {
       "Description": "Select the subnets where EC2 Instances to be launched",
       "Type": "List<AWS::EC2::Subnet::Id>"
@@ -86,6 +91,7 @@
       "Type" : "AWS::EC2::SecurityGroup",
       "Properties" : {
         "GroupDescription" : "Enable HTTP from the load balancer only and SSH from the location selected",
+        "VpcId" : {"Ref" : "Network"},
         "SecurityGroupIngress" : [ {
           "IpProtocol" : "tcp",
           "FromPort" : "22",
@@ -106,7 +112,7 @@
         "ImageId": {"Ref": "AMIId"},
         "InstanceType": {"Ref": "EC2InstanceType"},
         "AssociatePublicIpAddress": {"Ref": "PublicORPrivate"},
-        "SecurityGroups": {"Ref": "ELBSG"}
+        "SecurityGroups": [{"Ref": "ELBSG"}]
       }
     },
 

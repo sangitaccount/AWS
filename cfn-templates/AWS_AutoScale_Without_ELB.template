@@ -66,6 +66,20 @@
         "MaxSize": 3,
         "HealthCheckGracePeriod": {"Ref": "HealthCheckWaitTime"},
         "TerminationPolicies": ["OldestInstance","OldestLaunchConfiguration"]
+      },
+      "CreationPolicy" : {
+        "ResourceSignal" : {
+          "Timeout" : "PT15M",
+          "Count"   : "1"
+        }
+      },
+      "UpdatePolicy": {
+        "AutoScalingRollingUpdate": {
+          "MinInstancesInService": "1",
+          "MaxBatchSize": "1",
+          "PauseTime" : "PT15M",
+          "WaitOnResourceSignals": "true"
+        }
       }
     },
     "ScaleUpPolicy" : {

@@ -87,7 +87,12 @@
           "LoadBalancerPort" : "80",
           "InstancePort" : "80",
           "Protocol" : "HTTP"
-        } ],
+        },
+          {
+            "LoadBalancerPort" : "22",
+            "InstancePort" : "22",
+            "Protocol" : "tcp"
+          }],
         "HealthCheck" : {
           "Target" : "HTTP:80/",
           "HealthyThreshold" : "3",
@@ -110,7 +115,15 @@
           "CidrIp": {
             "Ref": "SSHLocation"
           }
-        }]
+        },
+          {
+            "IpProtocol": "tcp",
+            "FromPort": "22",
+            "ToPort": "22",
+            "CidrIp": {
+              "Ref": "SSHLocation"
+            }
+          }]
       }
     },
     "InstanceSG": {
@@ -128,7 +141,13 @@
           "FromPort" : "80",
           "ToPort" : "80",
           "SourceSecurityGroupId": {"Fn::GetAtt" : ["ELBSG", "GroupId"]}
-        }]
+        },
+          {
+            "IpProtocol" : "tcp",
+            "FromPort" : "22",
+            "ToPort" : "22",
+            "SourceSecurityGroupId": {"Fn::GetAtt" : ["ELBSG", "GroupId"]}
+          }]
       }
     },
     "LaunchConfiguration": {
@@ -142,9 +161,8 @@
           "Fn::Base64": {
             "Fn::Join" : [ "", [
               "#!/bin/bash -xe\n",
-              "yum install -y aws-cfn-bootstrap\n",
-              "/opt/aws/bin/cfn-signal -e 0 --stack ", { "Ref": "AWS::StackName" },
-              " --resource AutoScalingGroup ",
+              "/opt/aws/bin/cfn-signal -e $? --stack ", { "Ref": "AWS::StackName" },
+              " --resource AutoScalingConfiguration ",
               " --region ", { "Ref" : "AWS::Region" }, "\n"
             ] ]
           }

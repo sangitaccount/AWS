@@ -22,3 +22,7 @@
 	
 - AWS_ELB_Apache
 	1) Classic Load Balancer across three AZ's with instances running Apache on port 80.
+
+- AWS_AutoScale_Without_ELB
+
+- AWS_AutoScale_ELB_Notification

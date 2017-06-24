@@ -60,14 +60,14 @@
     "HealthCheckWaitTime": {
       "Description": "Time to wait before start checking EC2 health",
       "Type": "Number",
-      "Default": 0
+      "Default": 30
     },
     "ScalingWaitTime": {
       "Description": "Amount of Time to wait between trigger related scaling activities",
       "Type": "Number",
       "Default": 180
     }
- },
+  },
 
   "Resources" : {
 
@@ -87,7 +87,12 @@
           "LoadBalancerPort" : "80",
           "InstancePort" : "80",
           "Protocol" : "HTTP"
-        } ],
+        },
+          {
+            "LoadBalancerPort" : "22",
+            "InstancePort" : "22",
+            "Protocol" : "tcp"
+          }],
         "HealthCheck" : {
           "Target" : "HTTP:80/",
           "HealthyThreshold" : "3",
@@ -97,7 +102,7 @@
         },
         "SecurityGroups": [{"Ref": "ELBSG"}]
       }
-   },
+    },
     "ELBSG": {
       "Type": "AWS::EC2::SecurityGroup",
       "Properties": {
@@ -110,7 +115,15 @@
           "CidrIp": {
             "Ref": "SSHLocation"
           }
-        }]
+        },
+          {
+            "IpProtocol": "tcp",
+            "FromPort": "22",
+            "ToPort": "22",
+            "CidrIp": {
+              "Ref": "SSHLocation"
+            }
+          }]
       }
     },
     "InstanceSG": {
@@ -124,11 +137,17 @@
           "ToPort" : "22",
           "CidrIp" : { "Ref" : "SSHLocation"}
         }, {
-        "IpProtocol" : "tcp",
-        "FromPort" : "80",
-        "ToPort" : "80",
+          "IpProtocol" : "tcp",
+          "FromPort" : "80",
+          "ToPort" : "80",
           "SourceSecurityGroupId": {"Fn::GetAtt" : ["ELBSG", "GroupId"]}
-         }]
+        },
+          {
+            "IpProtocol" : "tcp",
+            "FromPort" : "22",
+            "ToPort" : "22",
+            "SourceSecurityGroupId": {"Fn::GetAtt" : ["ELBSG", "GroupId"]}
+          }]
       }
     },
     "LaunchConfiguration": {
@@ -137,7 +156,17 @@
         "ImageId": {"Ref": "AMIId"},
         "InstanceType": {"Ref": "EC2InstanceType"},
         "AssociatePublicIpAddress": {"Ref": "PublicORPrivate"},
-        "SecurityGroups": [{"Ref": "InstanceSG"}]
+        "SecurityGroups": [{"Ref": "InstanceSG"}],
+        "UserData": {
+          "Fn::Base64": {
+            "Fn::Join" : [ "", [
+              "#!/bin/bash -xe\n",
+              "/opt/aws/bin/cfn-signal -e $? --stack ", { "Ref": "AWS::StackName" },
+              " --resource AutoScalingConfiguration ",
+              " --region ", { "Ref" : "AWS::Region" }, "\n"
+            ] ]
+          }
+        }
       }
     },
 

@@ -1,0 +1,136 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "Template to create Lambda Cloudwatch Events to Shutdown instances",
+  "Resources": {
+    "LambdaIAMRole": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Principal": {
+                "Service": [
+                  "lambda.amazonaws.com"
+                ]
+              },
+              "Action": [
+                "sts:AssumeRole"
+              ]
+            }
+          ]
+        },
+        "Path": "/",
+        "Policies": [
+          {
+            "PolicyName": "LambdaIAMRole",
+            "PolicyDocument": {
+              "Version": "2012-10-17",
+              "Statement": [
+                {
+                  "Effect": "Allow",
+                  "Action": [
+                    "logs:CreateLogGroup",
+                    "logs:CreateLogStream",
+                    "logs:PutLogEvents"
+                  ],
+                  "Resource": "arn:aws:logs:*:*:*"
+                },
+                {
+                  "Effect": "Allow",
+                  "Action": [
+                    "ec2:Start*",
+                    "ec2:Stop*",
+                    "ec2:Desc*"
+                  ],
+                  "Resource": "*"
+                },
+		{
+		  "Effect": "Allow",
+		  "Action": [
+         	    "route53:ChangeResourceRecordSets",
+           	    "route53:GetHostedZone",
+                    "route53:ListHostedZones",
+           	    "route53:ListResourceRecordSets"
+		   ],
+		   "Resource": "*"
+		}
+              ]
+            }
+          }
+        ]
+      }
+    },
+    "LambdaEC2StopFunction": {
+      "Type" : "AWS::Lambda::Function",
+      "Properties" : {
+        "Role": { "Fn::GetAtt" : ["LambdaIAMRole", "Arn"] },
+        "Code": {
+          "S3Bucket": "san-lambda",
+          "S3Key": "instance_stop.zip"
+        },
+        "Handler" : "instance_stop.lambda_handler",
+        "FunctionName": "ec2stop_lambda",
+        "Runtime": "python2.7",
+        "Timeout": "90"
+      }
+    },
+    "LambdaEC2StartFunction": {
+      "Type" : "AWS::Lambda::Function",
+      "Properties" : {
+        "Role": { "Fn::GetAtt" : ["LambdaIAMRole", "Arn"] },
+        "Code": {
+          "S3Bucket": "san-lambda",
+          "S3Key": "instance_start.zip"
+        },
+        "Handler" : "instance_start.lambda_handler",
+        "FunctionName": "ec2start_lambda",
+        "Runtime": "python2.7",
+        "Timeout": "90"
+      }
+    },
+    "EC2StopScheduledRule": {
+      "Type": "AWS::Events::Rule",
+      "Properties": {
+        "Description": "Trigger event to stop EC2 Instances",
+        "ScheduleExpression": "cron(0 13 * * ? *)",
+        "State": "ENABLED",
+        "Targets": [{
+          "Arn": { "Fn::GetAtt": ["LambdaEC2StopFunction", "Arn"] },
+          "Id": "EC2StopV1"
+        }]
+      }
+    },
+    "PermissionForEventsToInvokeEC2StopLambda": {
+      "Type": "AWS::Lambda::Permission",
+      "Properties": {
+        "FunctionName": { "Ref": "LambdaEC2StopFunction" },
+        "Action": "lambda:InvokeFunction",
+        "Principal": "events.amazonaws.com",
+        "SourceArn": { "Fn::GetAtt": ["EC2StopScheduledRule", "Arn"] }
+      }
+    },
+    "EC2StartScheduledRule": {
+      "Type": "AWS::Events::Rule",
+      "Properties": {
+        "Description": "Trigger event to start EC2 Instances",
+        "ScheduleExpression": "cron(0 23 * * ? *)",
+        "State": "ENABLED",
+        "Targets": [{
+          "Arn": { "Fn::GetAtt": ["LambdaEC2StartFunction", "Arn"] },
+          "Id": "EC2StartV1"
+        }]
+      }
+    },
+    "PermissionForEventsToInvokeEC2StartLambda": {
+      "Type": "AWS::Lambda::Permission",
+      "Properties": {
+        "FunctionName": { "Ref": "LambdaEC2StartFunction" },
+        "Action": "lambda:InvokeFunction",
+        "Principal": "events.amazonaws.com",
+        "SourceArn": { "Fn::GetAtt": ["EC2StartScheduledRule", "Arn"] }
+      }
+    }
+  }
+}

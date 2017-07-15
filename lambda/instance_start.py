@@ -37,6 +37,7 @@ def update_rr(bastion,ip):
     if response['HostedZones'][i]['Name'] == 'linuxndevops.com.':
       update_host_response = client.change_resource_record_sets(  HostedZoneId=response['HostedZones'][i]['Id'], ChangeBatch={'Changes': [{ 'Action': 'UPSERT', 'ResourceRecordSet': { 'Name': 'ssh.linuxndevops.com.', 'Type': 'CNAME', 'TTL': 300, 'ResourceRecords': [{'Value': bastion }] } } ]})
       update_ip_response = client.change_resource_record_sets(  HostedZoneId=response['HostedZones'][i]['Id'], ChangeBatch={'Changes': [{ 'Action': 'UPSERT', 'ResourceRecordSet': { 'Name': 'linuxndevops.com.', 'Type': 'A', 'TTL': 300, 'ResourceRecords': [{'Value': ip }] } } ]})
+      update_ip_response = client.change_resource_record_sets(  HostedZoneId=response['HostedZones'][i]['Id'], ChangeBatch={'Changes': [{ 'Action': 'UPSERT', 'ResourceRecordSet': { 'Name': 'www.linuxndevops.com.', 'Type': 'A', 'TTL': 300, 'ResourceRecords': [{'Value': ip }] } } ]})
 
 def lambda_handler(event, context):
 
